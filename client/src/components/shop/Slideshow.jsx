@@ -6,7 +6,7 @@ const slides = [
     image: "/src/assets/images/3.png",
     title: "Welcome to FixHub",
     description: "Get Your Device Fixed Today!",
-    link: "/products",
+    link: "/services",
   },
   {
     image: "/src/assets/images/1.jpeg",

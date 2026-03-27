@@ -285,3 +285,76 @@ exports.updateProfile = async (req, res) => {
     });
   }
 };
+
+// Logout user
+exports.logout = async (req, res) => {
+  try {
+    // In a stateless JWT system, logout is typically handled on the client side
+    // by removing the token. We can optionally implement token blacklisting here.
+    res.status(200).json({
+      status: "success",
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error during logout",
+    });
+  }
+};
+
+// Refresh token
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        status: "error",
+        message: "Refresh token is required",
+      });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_KEY || JWT_KEY,
+    );
+
+    // Get user
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Generate new access token
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      JWT_KEY,
+      { expiresIn: "1h" },
+    );
+
+    res.status(200).json({
+      status: "success",
+      token,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    res.status(401).json({
+      status: "error",
+      message: "Invalid refresh token",
+    });
+  }
+};

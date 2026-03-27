@@ -8,6 +8,7 @@ const adminRoutes = require("./routes/admin");
 const productRoutes = require("./routes/products");
 const orderRoutes = require("./routes/orders");
 const categoryRoutes = require("./routes/categories");
+const serviceRoutes = require("./routes/services");
 
 const app = express();
 const server = require("http").Server(app);
@@ -31,9 +32,10 @@ mongoose
 
 // Routes
 app.use("/api/auth", authRoutes);
-// app.use('/api/admin', adminRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/services", serviceRoutes);
 // app.use('/api/orders', orderRoutes);
 
 // Error handling middleware

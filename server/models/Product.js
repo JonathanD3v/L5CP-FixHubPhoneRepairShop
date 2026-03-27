@@ -36,11 +36,11 @@ const productSchema = new mongoose.Schema({
     min: 0,
     default: null,
   },
-  cost: {
-    type: Number,
-    min: 0,
-    default: 0,
-  },
+  // cost: {
+  //   type: Number,
+  //   min: 0,
+  //   default: 0,
+  // },
 
   // Inventory
   stock: {
@@ -73,6 +73,15 @@ const productSchema = new mongoose.Schema({
     default: "",
   },
 
+  // SEO / URL
+  slug: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+    lowercase: true,
+  },
+
   // Status
   isActive: {
     type: Boolean,
@@ -81,6 +90,12 @@ const productSchema = new mongoose.Schema({
   isFeatured: {
     type: Boolean,
     default: false,
+  },
+  discount: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0,
   },
 
   createdAt: {
@@ -92,6 +107,27 @@ const productSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Transform function to convert image paths to full URLs
+productSchema.methods.toJSON = function () {
+  const product = this.toObject();
+  const baseUrl = process.env.BASE_URL || "http://localhost:5555";
+
+  if (product.images && Array.isArray(product.images)) {
+    product.images = product.images.map((img) => {
+      if (img.startsWith("/uploads")) {
+        return `${baseUrl}${img}`;
+      }
+      return img;
+    });
+  }
+
+  if (product.mainImage && product.mainImage.startsWith("/uploads")) {
+    product.mainImage = `${baseUrl}${product.mainImage}`;
+  }
+
+  return product;
+};
 
 // Generate slug from name
 productSchema.pre("save", function (next) {

@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Product = require("../models/Product");
+const path = require("path");
+const fs = require("fs");
 
 // Helper function to generate unique slug
 const generateUniqueSlug = async (name) => {
@@ -170,7 +172,35 @@ exports.getProduct = async (req, res) => {
 // Admin: Create product
 exports.createProduct = async (req, res) => {
   try {
-    const productData = req.body;
+    // Parse form data values to correct types
+    const productData = {
+      name: req.body.name,
+      sku: req.body.sku,
+      category: req.body.category,
+      description: req.body.description,
+      shortDescription: req.body.shortDescription,
+      price: req.body.price ? parseFloat(req.body.price) : undefined,
+      comparePrice: req.body.comparePrice
+        ? parseFloat(req.body.comparePrice)
+        : undefined,
+      stock: req.body.stock ? parseInt(req.body.stock) : 0,
+      lowStockThreshold: req.body.lowStockThreshold
+        ? parseInt(req.body.lowStockThreshold)
+        : 5,
+      isActive: req.body.isActive === "true" || req.body.isActive === true,
+      isFeatured:
+        req.body.isFeatured === "true" || req.body.isFeatured === true,
+      discount: req.body.discount ? parseFloat(req.body.discount) : 0,
+    };
+
+    // Handle multiple image uploads
+    if (req.files && req.files.length > 0) {
+      productData.images = req.files.map(
+        (file) => `/uploads/products/${file.filename}`,
+      );
+      // Set main image as the first uploaded image
+      productData.mainImage = productData.images[0];
+    }
 
     // Generate unique slug from name if not provided
     if (!productData.slug && productData.name) {
@@ -206,7 +236,61 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = { ...req.body, updatedAt: Date.now() };
+
+    // Parse form data values to correct types
+    const updateData = {};
+    if (req.body.name !== undefined) updateData.name = req.body.name;
+    if (req.body.sku !== undefined) updateData.sku = req.body.sku;
+    if (req.body.category !== undefined)
+      updateData.category = req.body.category;
+    if (req.body.description !== undefined)
+      updateData.description = req.body.description;
+    if (req.body.shortDescription !== undefined)
+      updateData.shortDescription = req.body.shortDescription;
+    if (req.body.price !== undefined)
+      updateData.price = parseFloat(req.body.price);
+    if (req.body.comparePrice !== undefined)
+      updateData.comparePrice = req.body.comparePrice
+        ? parseFloat(req.body.comparePrice)
+        : null;
+    if (req.body.stock !== undefined)
+      updateData.stock = parseInt(req.body.stock);
+    if (req.body.lowStockThreshold !== undefined)
+      updateData.lowStockThreshold = parseInt(req.body.lowStockThreshold);
+    if (req.body.isActive !== undefined)
+      updateData.isActive =
+        req.body.isActive === "true" || req.body.isActive === true;
+    if (req.body.isFeatured !== undefined)
+      updateData.isFeatured =
+        req.body.isFeatured === "true" || req.body.isFeatured === true;
+    if (req.body.discount !== undefined)
+      updateData.discount = parseFloat(req.body.discount);
+
+    // Handle image uploads
+    if (req.files && req.files.length > 0) {
+      // Get existing product to delete old images
+      const existingProduct = await Product.findById(id);
+      if (
+        existingProduct &&
+        existingProduct.images &&
+        existingProduct.images.length > 0
+      ) {
+        // Delete old image files
+        existingProduct.images.forEach((imagePath) => {
+          const fullPath = path.join(__dirname, "..", imagePath);
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        });
+      }
+      // Set new images
+      updateData.images = req.files.map(
+        (file) => `/uploads/products/${file.filename}`,
+      );
+      updateData.mainImage = updateData.images[0];
+    }
+
+    updateData.updatedAt = Date.now();
 
     // If name is being updated, generate new slug
     if (updateData.name) {
@@ -280,6 +364,16 @@ exports.permanentDeleteProduct = async (req, res) => {
       return res.status(404).json({
         status: "error",
         message: "Product not found",
+      });
+    }
+
+    // Delete associated image files
+    if (product.images && product.images.length > 0) {
+      product.images.forEach((imagePath) => {
+        const fullPath = path.join(__dirname, "..", imagePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
       });
     }
 

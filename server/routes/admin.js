@@ -1,13 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { protect, restrictTo } = require("../middleware/auth");
-const authController = require("../controllers/admin/authController");
+const authController = require("../controllers/authController");
 const userController = require("../controllers/admin/userController");
 const productController = require("../controllers/admin/productController");
 const orderController = require("../controllers/admin/orderController");
 const customerController = require("../controllers/admin/customerController");
 const inventoryController = require("../controllers/admin/inventoryController");
 const dashboardController = require("../controllers/admin/dashboardController");
+const serviceController = require("../controllers/admin/serviceController");
 const mediaController = require("../controllers/admin/mediaController");
 const multer = require("multer");
 const path = require("path");
@@ -72,6 +73,29 @@ const upload = multer({
   },
 });
 
+// Separate multer configuration for services
+const serviceStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "../uploads/services");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "service-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const serviceUpload = multer({
+  storage: serviceStorage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+});
+
 router.post(
   "/products",
   upload.array("images", 5),
@@ -120,12 +144,22 @@ router
 router.get("/dashboard/stats", dashboardController.getDashboardStats);
 router.get("/dashboard/reports", dashboardController.getReports);
 
-// Settings routes
-// router.get('/settings', settingsController.getSettings);
-// router.put('/settings', settingsController.updateSettings);
-// router.route('/payment-methods')
-//     .get(settingsController.getPaymentMethods)
-//     .put(settingsController.updatePaymentMethods);
+// Service management routes
+router.get("/services", serviceController.getAllServices);
+router.get("/services/:id", serviceController.getService);
+router.post(
+  "/services",
+  serviceUpload.single("image"),
+  serviceController.createService,
+);
+router.put(
+  "/services/:id",
+  serviceUpload.single("image"),
+  serviceController.updateService,
+);
+router.delete("/services/:id", serviceController.deleteService);
+router.patch("/services/:id/toggle", serviceController.toggleServiceStatus);
+router.get("/services/categories/list", serviceController.getServiceCategories);
 
 // Media upload route
 router.post("/media/upload", mediaController.uploadMedia);
