@@ -69,7 +69,6 @@ router.delete(
   serviceController.deleteService,
 );
 
-// ⭐ Extra (optional but useful)
 router.patch(
   "/:id/toggle",
   protect,

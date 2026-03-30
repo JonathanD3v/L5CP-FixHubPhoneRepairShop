@@ -23,6 +23,12 @@ const ProductDetail = () => {
     country: "",
   });
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentDetails, setPaymentDetails] = useState({
+    cardHolder: "",
+    cardNumber: "",
+    expirationDate: "",
+    cvv: "",
+  });
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -83,21 +89,35 @@ const ProductDetail = () => {
     setPaymentMethod(e.target.value);
   };
 
+  const handlePaymentDetailsChange = (e) => {
+    const { name, value } = e.target;
+    setPaymentDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const validateForm = () => {
-    const requiredFields = [
-      "name",
-      "email",
-      "phone",
-      "street",
-      "city",
-      "state",
-      "country",
-    ];
+    const requiredFields = ["name", "email", "phone", "street", "city"];
     const missingFields = [];
 
     for (const field of requiredFields) {
       if (!shippingInfo[field] || shippingInfo[field].trim() === "") {
         missingFields.push(field);
+      }
+    }
+
+    if (paymentMethod === "card") {
+      const requiredCardFields = [
+        "cardHolder",
+        "cardNumber",
+        "expirationDate",
+        "cvv",
+      ];
+      for (const field of requiredCardFields) {
+        if (!paymentDetails[field] || paymentDetails[field].trim() === "") {
+          missingFields.push(field);
+        }
       }
     }
 
@@ -128,8 +148,14 @@ const ProductDetail = () => {
             price: product.price,
           },
         ],
-        shippingAddress: shippingInfo,
-        paymentMethod: paymentMethod,
+        shippingAddress: {
+          ...shippingInfo,
+          name: shippingInfo.name,
+          email: shippingInfo.email,
+          phone: shippingInfo.phone,
+        },
+        paymentMethod: paymentMethod === "credit_card" ? "card" : paymentMethod,
+        paymentDetails: paymentMethod === "card" ? paymentDetails : undefined,
         subtotal: product.price * quantity,
         shippingCost: 0,
         tax: 0,
@@ -405,32 +431,6 @@ const ProductDetail = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        State
-                      </label>
-                      <input
-                        type="text"
-                        name="state"
-                        value={shippingInfo.state}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Country
-                      </label>
-                      <input
-                        type="text"
-                        name="country"
-                        value={shippingInfo.country}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
                   </div>
                 </div>
 
@@ -474,6 +474,48 @@ const ProductDetail = () => {
                         </span>
                       </div>
                     </label>
+                    {paymentMethod === "card" && (
+                      <div className="mt-4 space-y-3">
+                        <input
+                          type="text"
+                          name="cardHolder"
+                          placeholder="Cardholder Name"
+                          value={paymentDetails.cardHolder}
+                          onChange={handlePaymentDetailsChange}
+                          className="w-full px-4 py-2 border rounded"
+                          required
+                        />
+                        <input
+                          type="text"
+                          name="cardNumber"
+                          placeholder="Card Number"
+                          value={paymentDetails.cardNumber}
+                          onChange={handlePaymentDetailsChange}
+                          className="w-full px-4 py-2 border rounded"
+                          required
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <input
+                            type="text"
+                            name="expirationDate"
+                            placeholder="MM/YY"
+                            value={paymentDetails.expirationDate}
+                            onChange={handlePaymentDetailsChange}
+                            className="w-full px-4 py-2 border rounded"
+                            required
+                          />
+                          <input
+                            type="text"
+                            name="cvv"
+                            placeholder="CVV"
+                            value={paymentDetails.cvv}
+                            onChange={handlePaymentDetailsChange}
+                            className="w-full px-4 py-2 border rounded"
+                            required
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

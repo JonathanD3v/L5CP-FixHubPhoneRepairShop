@@ -7,6 +7,13 @@ const orderSchema = new mongoose.Schema({
     unique: true,
   },
 
+  // User relation (for populate, roles and audit)
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+
   // Customer Info
   customerName: {
     type: String,
@@ -25,8 +32,6 @@ const orderSchema = new mongoose.Schema({
   customerAddress: {
     street: String,
     city: String,
-    state: String,
-    zipCode: String,
   },
 
   // Order Items
@@ -38,7 +43,6 @@ const orderSchema = new mongoose.Schema({
         required: true,
       },
       productName: String,
-      productSlug: String,
       productImage: String,
       quantity: {
         type: Number,
@@ -94,8 +98,14 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["cash", "card", "bank"],
+    enum: ["cash", "card"],
     default: null,
+  },
+  paymentDetails: {
+    cardHolder: String,
+    cardNumber: String,
+    expirationDate: String,
+    cvv: String,
   },
   paymentDate: Date,
   paymentReference: String,

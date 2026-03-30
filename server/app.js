@@ -36,7 +36,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/services", serviceRoutes);
-// app.use('/api/orders', orderRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

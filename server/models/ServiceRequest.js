@@ -89,9 +89,7 @@ const serviceRequestSchema = new mongoose.Schema({
     enum: [
       "pending", // Waiting assignment
       "assigned", // Technician assigned
-      "diagnosing", // Checking issue
       "in-progress", // Working on it
-      "waiting-approval", // Waiting customer approval
       "waiting-parts", // Waiting for parts
       "completed", // Repair done
       "delivered", // Customer picked up

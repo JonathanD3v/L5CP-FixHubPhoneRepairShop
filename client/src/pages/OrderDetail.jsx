@@ -125,10 +125,10 @@ const OrderDetail = () => {
               </div>
               <span
                 className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(
-                  order.status,
+                  order.status || order.orderStatus,
                 )}`}
               >
-                {order.status}
+                {order.status || order.orderStatus}
               </span>
             </div>
           </div>
@@ -181,7 +181,15 @@ const OrderDetail = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-500">Subtotal</span>
-                <span className="font-medium">${order.total.toFixed(2)}</span>
+                <span className="font-medium">
+                  $
+                  {(
+                    order.subtotal ||
+                    order.total ||
+                    order.totalAmount ||
+                    0
+                  ).toFixed(2)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Shipping</span>
@@ -191,7 +199,7 @@ const OrderDetail = () => {
                 <div className="flex justify-between">
                   <span className="text-lg font-semibold">Total</span>
                   <span className="text-lg font-semibold text-blue-600">
-                    ${order.total.toFixed(2)}
+                    ${(order.total || order.totalAmount || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -209,11 +217,12 @@ const OrderDetail = () => {
                   Shipping Address
                 </h3>
                 <p className="mt-2 text-gray-900">
-                  {order.shippingAddress.street}
+                  {(order.shippingAddress || order.customerAddress || {})
+                    .street || "N/A"}
                   <br />
-                  {order.shippingAddress.city}, {order.shippingAddress.state}
+                  {(order.shippingAddress || order.customerAddress || {})
+                    .city || ""}
                   <br />
-                  {order.shippingAddress.country}
                 </p>
               </div>
               <div>
@@ -221,11 +230,17 @@ const OrderDetail = () => {
                   Contact Information
                 </h3>
                 <p className="mt-2 text-gray-900">
-                  {order.shippingAddress.name}
+                  {order.customerName ||
+                    (order.shippingAddress || {}).name ||
+                    ""}
                   <br />
-                  {order.shippingAddress.email}
+                  {order.customerEmail ||
+                    (order.shippingAddress || {}).email ||
+                    ""}
                   <br />
-                  {order.shippingAddress.phone}
+                  {order.customerPhone ||
+                    (order.shippingAddress || {}).phone ||
+                    ""}
                 </p>
               </div>
             </div>
