@@ -122,7 +122,7 @@ exports.updateOrderStatus = catchAsync(async (req, res) => {
   order.statusHistory = order.statusHistory || [];
   order.statusHistory.push({
     status,
-    updatedBy: req.user._id,
+    updatedBy: req.user?._id || null,
   });
 
   await order.save();

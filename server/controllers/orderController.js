@@ -173,7 +173,7 @@ exports.createOrder = async (req, res) => {
       discount,
       totalAmount,
       orderStatus: "pending",
-      paymentStatus: "pending",
+      paymentStatus: effectivePaymentMethod === "card" ? "paid" : "pending",
       paymentMethod: effectivePaymentMethod,
       paymentDetails,
       deliveryMethod,
@@ -329,5 +329,61 @@ exports.updateOrderStatus = async (req, res) => {
   } catch (error) {
     console.error("Error updating order status:", error);
     return res.status(500).json({ error: "Error updating order status" });
+  }
+};
+
+exports.processRefund = async (req, res) => {
+  try {
+    const { amount, reason } = req.body;
+
+    const query = { _id: req.params.id };
+    if (req.user.role !== "admin" && req.user.role !== "staff") {
+      query.user = req.user._id;
+    }
+
+    const order = await Order.findOne(query);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    if (!order.orderStatus || order.orderStatus !== "delivered") {
+      return res
+        .status(400)
+        .json({ error: "Only delivered orders can be refunded" });
+    }
+
+    const refundAmount = Number(amount || order.totalAmount || 0);
+    if (refundAmount <= 0 || refundAmount > order.totalAmount) {
+      return res.status(400).json({ error: "Invalid refund amount" });
+    }
+
+    order.paymentStatus = "refunded";
+    order.orderStatus = "refunded";
+    order.refund = {
+      amount: refundAmount,
+      reason: reason || "",
+      processedAt: Date.now(),
+    };
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "refunded",
+      notes: reason || "Refund processed",
+      updatedBy: req.user._id,
+    });
+
+    await order.save();
+
+    const populatedOrder = await Order.findById(order._id)
+      .populate("user", "name email")
+      .populate("items.productId", "name price images");
+
+    return res.json({
+      status: "success",
+      data: { order: mapOrderDto(populatedOrder) },
+    });
+  } catch (error) {
+    console.error("Error processing refund:", error);
+    return res.status(500).json({ error: "Error processing refund" });
   }
 };

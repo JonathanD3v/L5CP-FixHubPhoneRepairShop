@@ -41,8 +41,10 @@ app.use("/api/orders", orderRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
-    status: "error",
+  const statusCode = err.statusCode || 500;
+  const statusText = err.status || (statusCode >= 500 ? "error" : "fail");
+  res.status(statusCode).json({
+    status: statusText,
     message: err.message || "Something went wrong!",
   });
 });

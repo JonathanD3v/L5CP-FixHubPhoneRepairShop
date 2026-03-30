@@ -14,14 +14,14 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Apply authentication middleware to all admin routes
-// router.use(protect);
-// router.use(restrictTo('admin'));
-
-// Auth routes
+// Auth routes (public)
 router.post("/auth/login", authController.login);
 router.post("/auth/logout", authController.logout);
 router.post("/auth/refresh-token", authController.refreshToken);
+
+// Protect admin routes beyond auth
+router.use(protect);
+router.use(restrictTo("admin", "staff", "technician"));
 
 // User management routes
 router.get("/users", userController.getAllUsers);
